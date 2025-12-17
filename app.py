@@ -13,9 +13,17 @@ st.set_page_config(
     layout="wide"
 )
 
-# CONFIGURACIÓN DE REINICIO
+# 1. PRIMERO INICIALIZAMOS (Esto debe ir antes de cualquier 'if')
 if 'count_reset' not in st.session_state:
     st.session_state.count_reset = 0
+
+if 'limpieza_inicial' not in st.session_state:
+    st.session_state.limpieza_inicial = False
+
+# 2. SEGUIDO HACEMOS LA VALIDACIÓN DE LIMPIEZA
+if st.session_state.count_reset == 0 and not st.session_state.limpieza_inicial:
+    st.session_state.limpieza_inicial = True
+    st.rerun()
 
 if 'carta_generada' not in st.session_state:
     st.session_state.carta_generada = False
@@ -80,10 +88,7 @@ tipo_carta = st.selectbox(
 
 # ================= BOTÓN REINICIAR =================
 if st.button("🔄 REINICIAR FORMULARIO"):
-    # Sumamos 1 al contador para forzar a Streamlit a olvidar los textos escritos
     st.session_state.count_reset += 1 
-    
-    # Limpiamos los estados de la carta
     st.session_state.carta_generada = False
     st.session_state.output_path = None
     st.session_state.vista_previa_html = None
@@ -97,9 +102,10 @@ with col1:
     
     comuna = st.text_input(
         "Comuna:",
-        placeholder="Valparaiso",
-        key=f"comuna_{st.session_state.count_reset}",
-        help="Ciudad/comuna donde se emite la carta"
+        value="",
+        placeholder="Ingrese comuna (Ej: Valparaíso)", 
+        key=f"comuna_input_{st.session_state.count_reset}",
+        autocomplete="new-password"
     )
     
     tratamiento = st.selectbox(
@@ -179,6 +185,12 @@ if tipo_carta == "error_lectura":
                 ["boleta", "factura"],
                 key=f"tipo_doc_{st.session_state.count_reset}"
             )
+            numero_boleta = st.text_input(
+                "N° Boleta/Factura:", 
+                placeholder="123456",
+                key=f"num_boleta_{st.session_state.count_reset}",
+                help="Número de la boleta o factura generada"
+            )
         
         with col_b:
             consumo_kwh = st.text_input(
@@ -241,7 +253,6 @@ with col_btn2:
     )
 
 with col_btn3:
-    # El botón de descarga siempre revisa si hay algo generado en la memoria
     if st.session_state.get('carta_generada') and st.session_state.get('output_path'):
         if os.path.exists(st.session_state.output_path):
             with open(st.session_state.output_path, "rb") as f:
@@ -277,11 +288,13 @@ if generar:
         else:
             with st.spinner("⚡ Generando carta..."):
                 try:
-                    doc = Document(template_path)
+                    from datetime import datetime, timedelta, timezone
+                    tz_chile = timezone(timedelta(hours=-3))
+                    hoy = datetime.now(tz_chile)
                     
-                    hoy = datetime.now()
                     meses = ["", "enero", "febrero", "marzo", "abril", "mayo", "junio",
-                            "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+                             "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+                    fecha_completa = f"{comuna}, {hoy.day} de {meses[hoy.month]} de {hoy.year}"
                     
                     if canal_ingreso == "WhatsApp":
                         texto_canal = "WhatsApp"
@@ -291,77 +304,43 @@ if generar:
                         texto_canal = f"nuestra {canal_ingreso}"
                     
                     estimado = "Estimado" if tratamiento == "Señor" else "Estimada"
-                    primer_nombre = nombre_cliente.split()[0]
+                    primer_nombre = nombre_cliente.split()[0] if nombre_cliente else "Cliente"
                     
-                    # REEMPLAZOS - Los más específicos primero
+                    doc = Document(template_path)
+                    
                     reemplazos = {
-                        # Fecha
+                        "Valparaiso, 16 de diciembre de [202X]": fecha_completa,
+                        "Valparaíso, 16 de diciembre de [202X]": fecha_completa,
+                        "Valparaiso": comuna,
+                        "Valparaíso": comuna,
                         "[Comuna]": comuna,
-                        "[día]": str(hoy.day),
-                        "[mes]": meses[hoy.month],
-                        "202[X]": str(hoy.year),
-                        "[202X]": str(hoy.year),
-                        
-                        # DGR - Encabezado
-                        "DGR N.º [XXXXXXX] /[202X]": f"DGR N° {gr_numero} /{hoy.year}",
                         "DGR N.º XXXXXXX /[202X]": f"DGR N° {gr_numero} /{hoy.year}",
-                        "DGR N.º [XXXXXXX]/[202X]": f"DGR N° {gr_numero}/{hoy.year}",
-                        "DGR N.º XXXXXXX/[202X]": f"DGR N° {gr_numero}/{hoy.year}",
-                        
-                        # REF - Esta es la parte que te fallaba
                         "Ref.: Reclamo N° 15965848": f"Ref.: Reclamo N° {gr_numero}",
-                        "Ref.: Reclamo N° [XXXXXXX]": f"Ref.: Reclamo N° {gr_numero}",
-                        "Ref.: Reclamo N° XXXXXXX": f"Ref.: Reclamo N° {gr_numero}",
-                        
-                        # Cliente y Datos
                         "Número de cliente: 15965848": f"Número de cliente: {numero_cliente}",
-                        "Número de cliente: [XXXXXXX]": f"Número de cliente: {numero_cliente}",
-                        "Número de cliente: XXXXXXX": f"Número de cliente: {numero_cliente}",
-                        "«[XXXXXXX]»": numero_cliente,
-                        
-                        # Genéricos de respaldo
-                        "[XXXXXXX]": gr_numero,
-                        "XXXXXXX": gr_numero,
-                        
-                        # Cliente info
                         "[Señor(a)]": tratamiento,
-                        "Señ[or(a)]": tratamiento,
-                        "[«Nombre y apellido reclamante»]": nombre_cliente,
                         "[Nombre y apellido reclamante]": nombre_cliente,
-                        "[«Dirección»]": direccion,
                         "[Dirección]": direccion,
-                        "[«Comuna»]": comuna,
-                        
-                        # Saludo
                         "[Estimado(a) Nombre,]": f"{estimado} {primer_nombre},",
-                        "Estimado(a) [Nombre,]": f"{estimado} {primer_nombre},",
-                        "[Nombre,]": f"{primer_nombre},",
-                        
-                        # Canal
                         "[(Ej: nuestra Oficina Comercial / WhatsApp / App CGE 1Click / Call Center / Correo Electrónico / Página Web).]": f"{texto_canal}.",
-                        "[(Ej: nuestra Oficina Comercial / WhatsApp / App CGE 1Click / Call Center / Correo Electrónico / Página Web / Portal SEC)]": texto_canal,
-                        
-                        # Firma
                         "[Nombre y apellido Gerente Comercial]": GERENTES[zona],
                     }
-                    
+
                     if tipo_carta == "error_lectura":
                         if rango_lectura:
-                            # Cubrimos todas las variaciones de formato para los días
                             reemplazos["[XXXXXX y XXXXXX.]"] = f"{rango_lectura}."
                             reemplazos["[XXXXXX y XXXXXX]"] = rango_lectura
                             reemplazos["XXXXXX y XXXXXX"] = rango_lectura
-                        
                         if fecha_boleta:
                             reemplazos["[día/mes/año]"] = fecha_boleta
                         if tipo_doc:
                             reemplazos["[boleta/factura]"] = tipo_doc
+                        if 'numero_boleta' in locals() and numero_boleta:
+                            reemplazos["[XXXXXX]"] = numero_boleta
                         if consumo_kwh:
                             reemplazos["XXX kWh"] = f"{consumo_kwh} kWh"
                         if monto_boleta:
                             reemplazos["[$ XX.XXX]"] = monto_boleta
                     
-                    # Ordenar por longitud
                     reemplazos_ordenados = sorted(reemplazos.items(), key=lambda x: len(x[0]), reverse=True)
                     
                     def aplicar_reemplazos(texto):
@@ -373,35 +352,35 @@ if generar:
                     for paragraph in doc.paragraphs:
                         texto = paragraph.text
                         texto_nuevo = aplicar_reemplazos(texto)
-                        
                         if texto_nuevo != texto:
                             paragraph.clear()
                             run = paragraph.add_run(texto_nuevo)
                             run.font.name = 'Arial'
                             run.font.size = Pt(10)
                             
-# --- CONFIGURACIÓN DE NEGRITAS ---
-                            # Definimos qué palabras SÍ deben ir en negrita (Destinatario y Referencia)
+                            # SOLO estas palabras van en negrita (SIN fecha, SIN DGR)
                             palabras_con_negrita = [
                                 tratamiento, 
                                 nombre_cliente, 
-                                direccion, 
+                                direccion,
                                 "Número de cliente:", 
                                 "Ref.: Reclamo N°", 
                                 GERENTES[zona], 
                                 "COMPAÑÍA GENERAL DE ELECTRICIDAD S.A."
                             ]
                             
-                            # Aplicamos negrita solo si el texto contiene elementos de la lista de arriba
-                            # Quitamos 'comuna' y 'DGR N°' para que el encabezado superior sea normal
-                            if any(x in texto_nuevo for x in palabras_con_negrita):
+                            # Aplica negrita SOLO si coincide Y NO es fecha ni DGR
+                            es_fecha = (f"{comuna}," in texto_nuevo and "de" in texto_nuevo and str(hoy.year) in texto_nuevo)
+                            es_dgr = ("DGR N°" in texto_nuevo and str(hoy.year) in texto_nuevo)
+                            
+                            if any(x in texto_nuevo for x in palabras_con_negrita) and not es_fecha and not es_dgr:
                                 run.font.bold = True
                             else:
                                 run.font.bold = False
                             
-                            # Excepción para el cargo del gerente (que no sea negrita)
-                            if "Gerente Comercial" in texto_nuevo and GERENTES[zona] not in texto_nuevo:
-                                run.font.bold = False
+                            # Excepción: Si el párrafo es SOLO la comuna (una línea), SÍ va en negrita
+                            if texto_nuevo.strip() == comuna:
+                                run.font.bold = True
                     
                     # Tablas
                     for table in doc.tables:
@@ -415,7 +394,7 @@ if generar:
                                         r.font.name = 'Arial'
                                         r.font.size = Pt(10)
                     
-                    # Excel
+                    # Excel Anexo
                     if df is not None:
                         doc.add_page_break()
                         doc.add_heading("Anexo - Datos Adicionales", level=1)
@@ -424,36 +403,23 @@ if generar:
                         for i, col in enumerate(df.columns):
                             cell = table.rows[0].cells[i]
                             cell.text = str(col)
-                            for p in cell.paragraphs:
-                                for r in p.runs:
-                                    r.font.name = 'Arial'
-                                    r.font.size = Pt(10)
-                                    r.font.bold = True
                         for i, row in df.iterrows():
                             for j, value in enumerate(row):
-                                cell = table.rows[i+1].cells[j]
-                                cell.text = str(value)
-                                for p in cell.paragraphs:
-                                    for r in p.runs:
-                                        r.font.name = 'Arial'
-                                        r.font.size = Pt(10)
+                                table.rows[i+1].cells[j].text = str(value)
                     
-                    # GUARDAR
                     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    filename = f"Carta_{TIPOS_CARTAS[tipo_carta].replace(' ', '_')}_GR_{gr_numero}_{timestamp}.docx"
+                    filename = f"Carta_{gr_numero}_{timestamp}.docx"
                     output_path = os.path.join("output", filename)
                     doc.save(output_path)
                     
-                    # GUARDAMOS EN MEMORIA PARA QUE EL BOTÓN DE DESCARGA LO VEA
                     st.session_state.carta_generada = True
                     st.session_state.output_path = output_path
                     
-                    # CREAMOS LA VISTA PREVIA EN MEMORIA TAMBIÉN
                     st.session_state.vista_previa_html = f"""
                         <div style='font-family:Arial;font-size:10pt;background:white;padding:20px;border:1px solid #ddd;border-radius:8px;color:black'>
                             <div style='text-align:right;margin-bottom:20px'>
-                                <p style='margin:0'><strong>{comuna}</strong>, {hoy.day} de {meses[hoy.month]} de {hoy.year}</p>
-                                <p style='margin:0'><strong>DGR N° {gr_numero} /{hoy.year}</strong></p>
+                                <p style='margin:0'>{comuna}, {hoy.day} de {meses[hoy.month]} de {hoy.year}</p>
+                                <p style='margin:0'>DGR N° {gr_numero} /{hoy.year}</p>
                             </div>
                             <p><strong>{tratamiento}</strong></p>
                             <p><strong>{nombre_cliente}</strong></p>
@@ -462,22 +428,16 @@ if generar:
                             <p style='margin-top:10px'><strong>Número de cliente: {numero_cliente}</strong></p>
                             <p><strong>Ref.: Reclamo N° {gr_numero}</strong></p>
                             <p style='margin-top:15px'>{estimado} {primer_nombre},</p>
-                            <p style='text-align:justify'>Junto con saludar, le confirmamos que hemos recibido su reclamo por {TIPOS_CARTAS[tipo_carta].lower()}...</p>
-                            <div style='margin-top:40px'>
-                                <p><strong>{GERENTES[zona]}</strong></p>
-                                <p>Gerente Comercial</p>
-                                <p><strong>COMPAÑÍA GENERAL DE ELECTRICIDAD S.A.</strong></p>
-                            </div>
+                            <p style='text-align:justify'>Junto con saludar, le confirmamos que hemos recibido su reclamo...</p>
                         </div>
                     """
-                    
                     st.success("✅ ¡Carta generada exitosamente!")
                     st.rerun()
 
                 except Exception as e:
                     st.error(f"❌ Error: {str(e)}")
 
-# MOSTRAR VISTA PREVIA SI EXISTE EN MEMORIA
+# MOSTRAR VISTA PREVIA
 if st.session_state.get('carta_generada') and 'vista_previa_html' in st.session_state:
     with st.expander("👁️ VER VISTA PREVIA", expanded=True):
         st.markdown(st.session_state.vista_previa_html, unsafe_allow_html=True)
@@ -494,13 +454,8 @@ with col3:
 
 st.markdown(f"""
 <div style='text-align:center;padding:20px;color:#64748b;font-size:0.9em'>
-    <p style='margin:5px 0'>⚡ <strong>Automatizador de Cartas </strong></p>
-    <p style='margin:5px 0'>Desarrollado por 
-        <a href='https://ciberbyte.vercel.app/' target='_blank' 
-           style='color:#0ea5e9; text-decoration:none; font-weight:bold; cursor:pointer;'>
-           CiberByte
-        </a> | Javier Ruiz Arismendi
-    </p>
+    <p style='margin:5px 0'>⚡ <strong>Automatizador de Cartas</strong></p>
+    <p style='margin:5px 0'>Desarrollado por <a href='https://ciberbyte.vercel.app/' target='_blank' style='color:#0ea5e9; text-decoration:none; font-weight:bold;'>CiberByte</a></p>
     <p style='margin:5px 0'>© 2025 - Sistema de Generación Automática</p>
 </div>
 """, unsafe_allow_html=True)
