@@ -492,10 +492,15 @@ with col2:
 with col3:
     st.metric("⏱️ Tiempo", "~60 seg")
 
-st.markdown("""
+st.markdown(f"""
 <div style='text-align:center;padding:20px;color:#64748b;font-size:0.9em'>
-<p style='margin:5px 0'>⚡ <strong>Automatizador de Cartas </strong></p>
-<p style='margin:5px 0'>Desarrollado por <strong>CiberByte</strong> | Javier Ruiz Arismendi</p>
-<p style='margin:5px 0'>© 2025 - Sistema de Generación Automática</p>
+    <p style='margin:5px 0'>⚡ <strong>Automatizador de Cartas CGE</strong></p>
+    <p style='margin:5px 0'>Desarrollado por 
+        <a href='https://ciberbyte.vercel.app/' target='_blank' 
+           style='color:#0ea5e9; text-decoration:none; font-weight:bold; cursor:pointer;'>
+           CiberByte
+        </a> | Javier Ruiz Arismendi
+    </p>
+    <p style='margin:5px 0'>© 2025 - Sistema de Generación Automática</p>
 </div>
 """, unsafe_allow_html=True)
