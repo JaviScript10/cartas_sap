@@ -64,7 +64,7 @@ def formatear_monto(valor):
 st.markdown("""
 <div style='background:linear-gradient(90deg,#1e40af,#0ea5e9);
 padding:25px;border-radius:12px;margin-bottom:25px;box-shadow:0 4px 6px rgba(0,0,0,0.1)'>
-<h1 style='color:white;margin:0;font-size:2.2em'>⚡ AUTOMATIZADOR DE CARTAS CGE</h1>
+<h1 style='color:white;margin:0;font-size:2.2em'>⚡ AUTOMATIZADOR DE CARTAS </h1>
 <p style='color:#e0f2fe;margin:8px 0 0 0;font-size:1.1em'>Sistema de Generación Automática de Respuestas</p>
 </div>
 """, unsafe_allow_html=True)
@@ -492,7 +492,7 @@ with col3:
 
 st.markdown("""
 <div style='text-align:center;padding:20px;color:#64748b;font-size:0.9em'>
-<p style='margin:5px 0'>⚡ <strong>Automatizador de Cartas CGE</strong></p>
+<p style='margin:5px 0'>⚡ <strong>Automatizador de Cartas </strong></p>
 <p style='margin:5px 0'>Desarrollado por <strong>CiberByte</strong> | Javier Ruiz Arismendi</p>
 <p style='margin:5px 0'>© 2025 - Sistema de Generación Automática</p>
 </div>
