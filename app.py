@@ -123,7 +123,8 @@ with col1:
     numero_cliente = st.text_input(
         "Número cliente:",
         placeholder="6255126",
-        key=f"num_cliente_{st.session_state.count_reset}"
+        key=f"num_cliente_{st.session_state.count_reset}",
+        autocomplete="off"
     )
 
 with col2:
@@ -133,7 +134,8 @@ with col2:
         "N° GR (Número de Reclamo):",
         placeholder="15624563",
         key=f"gr_{st.session_state.count_reset}",
-        help="Este número se usará en DGR y en Ref.: Reclamo N°"
+        help="Este número se usará en DGR y en Ref.: Reclamo N°",
+        autocomplete="off"
     )
     
     zona = st.selectbox(
