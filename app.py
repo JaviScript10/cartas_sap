@@ -64,8 +64,9 @@ CATEGORIAS = {
 }
 
 # ================= CANALES CON GÉNERO =================
-CANALES_MASCULINO = ["Call Center", "Correo Electrónico", "Portal SEC"]
+CANALES_MASCULINO = ["Call Center", "Correo Electrónico"]
 CANALES_FEMENINO = ["Oficina Comercial", "Página Web", "App CGE 1Click"]
+CANALES_EXTERNOS = ["Portal SEC", "Portal SERNAC"]  # Sin "nuestro/nuestra"
 
 # ================= FUNCIONES AUXILIARES =================
 def formatear_monto(valor):
@@ -204,7 +205,8 @@ with col2:
             "Call Center",
             "Correo Electrónico",
             "Página Web",
-            "Portal SEC"
+            "Portal SEC",
+            "Portal SERNAC"
         ],
         key=f"canal_{st.session_state.count_reset}"
     )
@@ -534,6 +536,9 @@ if generar:
                     
                     if canal_ingreso == "WhatsApp":
                         texto_canal = "WhatsApp"
+                    elif canal_ingreso in CANALES_EXTERNOS:
+                        # Canales externos: solo el nombre (el template ya tiene "a través de")
+                        texto_canal = canal_ingreso
                     elif canal_ingreso in CANALES_MASCULINO:
                         texto_canal = f"nuestro {canal_ingreso}"
                     else:
