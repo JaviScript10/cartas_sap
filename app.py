@@ -47,13 +47,19 @@ GERENTES = {
 # ================= CATEGORÍAS Y TIPOS DE CARTAS =================
 CATEGORIAS = {
     "Cobros": {
-        "error_lectura_halu": "Error de Lectura HALU",
         "apertura_casa_halu": "Apertura Casa Cerrada HALU",
+        "carta_aporte_lectura": "Aporte Lectura",
+        "atencion_emergencia_halu": "Atención de Emergencias HALU",
         "aumento_consumo_halu_sinvisita": "Aumento Consumo HALU Sin visita técnica",
         "aumento_consumo_nolu_sinvisita": "Aumento Consumo NOLU Sin visita técnica",
+        "carta_compromiso": "Carta Compromiso 10 días",
+        "carta_compromiso_i5": "Carta Compromiso con I5",
+        "carta_falta_info": "Carta falta información reclamo",
+        "error_lectura_halu": "Error de Lectura HALU",
+        "error_lectura_nolu": "Error de Lectura NOLU",
+        "error_lectura_regularizado_sgte_lectura": "Error Lectura Regularizado Siguiente Lectura HALU",
         "facturaciones_normalizadas": "Facturaciones Normalizadas",
-        "normal_avance": "Normal Avance",
-        "carta_aporte_lectura": "Aporte Lectura"
+        "normal_avance": "Normal Avance"
     },
     "DAR (Artefacto Dañado)": {
         # Por ahora vacío, se agregarán después
@@ -147,7 +153,7 @@ with col1:
     
     # ⭐ NUEVO NOMBRE: Formalidad en lugar de Tratamiento
     tratamiento = st.selectbox(
-        "Formalidad:", 
+        "Formalidad (Señor o Señora):", 
         ["", "Señor", "Señora"],
         key=f"tratamiento_{st.session_state.count_reset}",
         help="Forma de dirigirse al cliente"
@@ -425,6 +431,16 @@ elif tipo_carta == "aumento_consumo_nolu_sinvisita":
 
 elif tipo_carta == "facturaciones_normalizadas":
     with st.expander("📊 DATOS ESPECÍFICOS - FACTURACIONES NORMALIZADAS", expanded=True):
+        st.markdown("#### 📝 Motivo del reclamo")
+        
+        motivo_reclamo_fn = st.text_input(
+            "Motivo del reclamo:",
+            placeholder="error en la lectura",
+            key=f"motivo_reclamo_fn_{st.session_state.count_reset}",
+            help="Ejemplo: error en la lectura, aumento consumo, servicio no facturado, etc."
+        )
+        
+        st.markdown("---")
         st.markdown("#### 📅 Rango de días de lectura")
         
         col_a, col_b = st.columns(2)
@@ -457,6 +473,162 @@ elif tipo_carta == "carta_aporte_lectura":
         )
         
         st.info("ℹ️ El N° de requerimiento se copiará automáticamente del N° GR")
+
+elif tipo_carta == "error_lectura_regularizado_sgte_lectura":
+    with st.expander("📊 DATOS ESPECÍFICOS - ERROR LECTURA REGULARIZADO", expanded=True):
+        st.markdown("#### 📅 Rango de días de lectura")
+        
+        col_a, col_b = st.columns(2)
+        
+        with col_a:
+            dia_inicio_reg = st.text_input(
+                "Día inicio:",
+                placeholder="13",
+                key=f"dia_inicio_reg_{st.session_state.count_reset}",
+                help="Día de inicio del rango"
+            )
+        
+        with col_b:
+            dia_fin_reg = st.text_input(
+                "Día fin:",
+                placeholder="18",
+                key=f"dia_fin_reg_{st.session_state.count_reset}",
+                help="Día de fin del rango"
+            )
+        
+        st.markdown("---")
+        st.markdown("#### 📅 Historial de consumos")
+        
+        meses_historial_reg = st.text_input(
+            "Meses de historial:",
+            placeholder="24",
+            value="24",
+            key=f"meses_historial_reg_{st.session_state.count_reset}",
+            help="Cantidad de meses del historial"
+        )
+
+elif tipo_carta == "error_lectura_nolu":
+    with st.expander("📊 DATOS ESPECÍFICOS - ERROR LECTURA NOLU", expanded=True):
+        st.markdown("#### 📅 Rango de días de lectura")
+        
+        col_a, col_b = st.columns(2)
+        
+        with col_a:
+            dia_inicio_nolu = st.text_input(
+                "Día inicio:",
+                placeholder="10",
+                key=f"dia_inicio_nolu_{st.session_state.count_reset}",
+                help="Día de inicio del rango"
+            )
+        
+        with col_b:
+            dia_fin_nolu = st.text_input(
+                "Día fin:",
+                placeholder="15",
+                key=f"dia_fin_nolu_{st.session_state.count_reset}",
+                help="Día de fin del rango"
+            )
+        
+        st.markdown("---")
+        st.markdown("#### 📊 Datos de facturación")
+        
+        col_c, col_d = st.columns(2)
+        
+        with col_c:
+            fecha_factura_nolu = st.text_input(
+                "Fecha factura:",
+                placeholder="15.12.2025",
+                key=f"fecha_factura_nolu_{st.session_state.count_reset}",
+                help="Fecha de la factura (formato: dd.mm.yyyy)"
+            )
+        
+        with col_d:
+            monto_factura_nolu_input = st.text_input(
+                "Monto factura:",
+                placeholder="36745",
+                key=f"monto_factura_nolu_{st.session_state.count_reset}",
+                help="Monto de la factura"
+            )
+            monto_factura_nolu = formatear_monto(monto_factura_nolu_input) if monto_factura_nolu_input else ""
+            if monto_factura_nolu:
+                st.caption(f"💰 Formateado: {monto_factura_nolu}")
+
+elif tipo_carta == "atencion_emergencia_halu":
+    with st.expander("📊 DATOS ESPECÍFICOS - ATENCIÓN EMERGENCIAS", expanded=True):
+        st.markdown("#### 📅 Fechas de atención")
+        
+        col_a, col_b = st.columns(2)
+        
+        with col_a:
+            fecha_solicitud_emerg = st.text_input(
+                "Fecha solicitud:",
+                placeholder="03/10/2025",
+                key=f"fecha_solicitud_emerg_{st.session_state.count_reset}",
+                help="Fecha de la solicitud de emergencia"
+            )
+        
+        with col_b:
+            fecha_atencion_emerg = st.text_input(
+                "Fecha atención:",
+                placeholder="15/10/2025",
+                key=f"fecha_atencion_emerg_{st.session_state.count_reset}",
+                help="Fecha en que se atendió la emergencia"
+            )
+        
+        st.markdown("---")
+        st.markdown("#### 👤 Persona que solicitó atención emergencias")
+        
+        nombre_solicitante_raw = st.text_input(
+            "Nombre completo:",
+            placeholder="Mariana Lidia Espinoza Osorio",
+            key=f"nombre_solicitante_{st.session_state.count_reset}",
+            help="Nombre completo de quien solicitó la atención"
+        )
+        nombre_solicitante = capitalizar_texto(nombre_solicitante_raw)
+        
+        st.markdown("---")
+        st.markdown("#### 📋 Orden de trabajo y nota de crédito")
+        
+        col_c, col_d = st.columns(2)
+        
+        with col_c:
+            orden_trabajo = st.text_input(
+                "N° Orden de trabajo:",
+                placeholder="460506214",
+                key=f"orden_trabajo_{st.session_state.count_reset}",
+                help="Número de la orden de trabajo"
+            )
+        
+        with col_d:
+            nota_credito = st.text_input(
+                "N° Nota de crédito:",
+                placeholder="6669093",
+                key=f"nota_credito_{st.session_state.count_reset}",
+                help="Número de la nota de crédito"
+            )
+        
+        st.markdown("---")
+        st.markdown("#### 💰 Monto")
+        
+        monto_emerg_input = st.text_input(
+            "Monto:",
+            placeholder="24903",
+            key=f"monto_emerg_{st.session_state.count_reset}",
+            help="Monto de la atención de emergencia"
+        )
+        monto_emerg = formatear_monto(monto_emerg_input) if monto_emerg_input else ""
+        if monto_emerg:
+            st.caption(f"💰 Formateado: {monto_emerg}")
+
+elif tipo_carta == "carta_falta_info":
+    with st.expander("📊 DATOS ESPECÍFICOS - CARTA FALTA INFO", expanded=True):
+        st.info("ℹ️ El N° de reclamo ingresado se copiará automáticamente del N° GR")
+        st.markdown("Esta carta no requiere campos adicionales")
+
+elif tipo_carta in ["carta_compromiso", "carta_compromiso_i5", "normal_avance"]:
+    # Estas cartas no requieren campos específicos adicionales
+    pass
+
 
 # ================= TABLA EXCEL =================
 with st.expander("📎 TABLA DE DATOS (Opcional - se agrega al final)"):
@@ -644,6 +816,10 @@ if generar:
                             reemplazos["[24]"] = meses_historial_nolu
                     
                     elif tipo_carta == "facturaciones_normalizadas":
+                        # Motivo del reclamo
+                        if 'motivo_reclamo_fn' in locals() and motivo_reclamo_fn:
+                            reemplazos["[error en la lectura]"] = motivo_reclamo_fn
+                        
                         # Rango de días
                         if 'dia_inicio_fn' in locals() and dia_inicio_fn and 'dia_fin_fn' in locals() and dia_fin_fn:
                             rango_dias = f"{dia_inicio_fn} y {dia_fin_fn}"
@@ -656,6 +832,58 @@ if generar:
                         # Fecha del requerimiento
                         if 'fecha_requerimiento' in locals() and fecha_requerimiento:
                             reemplazos["[24/11/2025]"] = fecha_requerimiento
+                    
+                    elif tipo_carta == "error_lectura_regularizado_sgte_lectura":
+                        # Rango de días
+                        if 'dia_inicio_reg' in locals() and dia_inicio_reg and 'dia_fin_reg' in locals() and dia_fin_reg:
+                            rango_dias_reg = f"{dia_inicio_reg} y {dia_fin_reg}"
+                            reemplazos["[13 y 18]"] = rango_dias_reg
+                        
+                        # Meses de historial
+                        if 'meses_historial_reg' in locals() and meses_historial_reg:
+                            reemplazos["[24]"] = meses_historial_reg
+                    
+                    elif tipo_carta == "error_lectura_nolu":
+                        # Rango de días
+                        if 'dia_inicio_nolu' in locals() and dia_inicio_nolu and 'dia_fin_nolu' in locals() and dia_fin_nolu:
+                            rango_dias_nolu = f"{dia_inicio_nolu} y {dia_fin_nolu}"
+                            reemplazos["[10 y 15]"] = rango_dias_nolu
+                        
+                        # Fecha factura
+                        if 'fecha_factura_nolu' in locals() and fecha_factura_nolu:
+                            reemplazos["[15.12.2025]"] = fecha_factura_nolu
+                        
+                        # Monto factura
+                        if 'monto_factura_nolu' in locals() and monto_factura_nolu:
+                            reemplazos["[36.745]"] = monto_factura_nolu
+                    
+                    elif tipo_carta == "atencion_emergencia_halu":
+                        # Fechas
+                        if 'fecha_solicitud_emerg' in locals() and fecha_solicitud_emerg:
+                            reemplazos["[03/10/2025]"] = fecha_solicitud_emerg
+                        
+                        if 'fecha_atencion_emerg' in locals() and fecha_atencion_emerg:
+                            reemplazos["[15/10/2025]"] = fecha_atencion_emerg
+                        
+                        # Persona solicitante
+                        if 'nombre_solicitante' in locals() and nombre_solicitante:
+                            reemplazos["[Mariana Lidia Espinoza Osorio]"] = nombre_solicitante
+                        
+                        # Nota de crédito
+                        if 'nota_credito' in locals() and nota_credito:
+                            reemplazos["[6669093]"] = nota_credito
+                        
+                        # Orden de trabajo
+                        if 'orden_trabajo' in locals() and orden_trabajo:
+                            reemplazos["[460506214]"] = orden_trabajo
+                        
+                        # Monto
+                        if 'monto_emerg' in locals() and monto_emerg:
+                            reemplazos["[$24.903]"] = monto_emerg
+                    
+                    elif tipo_carta == "carta_falta_info":
+                        # N° de reclamo ingresado (igual que GR)
+                        reemplazos["[15939815]"] = gr_numero
                     
                     reemplazos_ordenados = sorted(reemplazos.items(), key=lambda x: len(x[0]), reverse=True)
                     
