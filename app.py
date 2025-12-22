@@ -44,19 +44,30 @@ GERENTES = {
     "Sur": "Christian Enrique Araya Silva"
 }
 
-# ================= TIPOS DE CARTAS =================
-TIPOS_CARTAS = {
-    "error_lectura": "Error de Lectura",
-    "aumento_consumo": "Aumento de Consumo",
-    "cobro_verificacion": "Cobro Verificación Medidor",
-    "peak_consumo": "Peak de Consumo",
-    "cobro_indebido": "Cobro Indebido"
+# ================= CATEGORÍAS Y TIPOS DE CARTAS =================
+CATEGORIAS = {
+    "Cobros": {
+        "error_lectura_halu": "Error de Lectura HALU",
+        "apertura_casa_halu": "Apertura Casa Cerrada HALU",
+        "aumento_consumo_halu_sinvisita": "Aumento Consumo HALU Sin visita técnica",
+        "aumento_consumo_nolu_sinvisita": "Aumento Consumo NOLU Sin visita técnica",
+        "facturaciones_normalizadas": "Facturaciones Normalizadas",
+        "normal_avance": "Normal Avance",
+        "carta_aporte_lectura": "Aporte Lectura"
+    },
+    "DAR (Artefacto Dañado)": {
+        # Por ahora vacío, se agregarán después
+    },
+    "Técnico Comercial": {
+        # Por ahora vacío, se agregarán después
+    }
 }
 
 # ================= CANALES CON GÉNERO =================
 CANALES_MASCULINO = ["Call Center", "Correo Electrónico", "Portal SEC"]
 CANALES_FEMENINO = ["Oficina Comercial", "Página Web", "App CGE 1Click"]
 
+# ================= FUNCIONES AUXILIARES =================
 def formatear_monto(valor):
     """Formatea monto con $ y puntos de miles"""
     try:
@@ -68,6 +79,15 @@ def formatear_monto(valor):
     except:
         return valor
 
+def capitalizar_texto(texto):
+    """
+    Capitaliza la primera letra de cada palabra
+    eduardo lópez → Eduardo López
+    """
+    if texto:
+        return texto.title()
+    return texto
+
 # ================= HEADER =================
 st.markdown("""
 <div style='background:linear-gradient(90deg,#1e40af,#0ea5e9);
@@ -77,12 +97,26 @@ padding:25px;border-radius:12px;margin-bottom:25px;box-shadow:0 4px 6px rgba(0,0
 </div>
 """, unsafe_allow_html=True)
 
-# ================= SELECTOR TIPO DE CARTA =================
+# ================= SELECTOR DE CATEGORÍA Y CARTA =================
 st.markdown("### 📋 SELECCIONAR TIPO DE CARTA")
+
+# Selector de Categoría
+categoria = st.selectbox(
+    "1️⃣ Categoría:",
+    options=list(CATEGORIAS.keys()),
+    key=f"categoria_{st.session_state.count_reset}"
+)
+
+# Mostrar info si la categoría está vacía
+if not CATEGORIAS[categoria]:
+    st.info(f"ℹ️ La categoría '{categoria}' aún no tiene cartas disponibles. Se agregarán próximamente.")
+    st.stop()
+
+# Selector de Carta (según categoría seleccionada)
 tipo_carta = st.selectbox(
-    "Tipo de respuesta:",
-    options=list(TIPOS_CARTAS.keys()),
-    format_func=lambda x: TIPOS_CARTAS[x],
+    "2️⃣ Tipo de carta:",
+    options=list(CATEGORIAS[categoria].keys()),
+    format_func=lambda x: CATEGORIAS[categoria][x],
     key=f"tipo_carta_{st.session_state.count_reset}"
 )
 
@@ -100,31 +134,39 @@ col1, col2 = st.columns(2)
 with col1:
     st.markdown("### 📋 DATOS DEL CLIENTE")
     
-    comuna = st.text_input(
+    # ⭐ MEJORA: Auto-capitalizar comuna
+    comuna_raw = st.text_input(
         "Comuna:",
         value="",
         placeholder="Ingrese comuna (Ej: Valparaíso)", 
         key=f"comuna_input_{st.session_state.count_reset}",
         autocomplete="new-password"
     )
+    comuna = capitalizar_texto(comuna_raw)
     
+    # ⭐ NUEVO NOMBRE: Formalidad en lugar de Tratamiento
     tratamiento = st.selectbox(
-        "Tratamiento:", 
+        "Formalidad:", 
         ["", "Señor", "Señora"],
-        key=f"tratamiento_{st.session_state.count_reset}"
+        key=f"tratamiento_{st.session_state.count_reset}",
+        help="Forma de dirigirse al cliente"
     )
     
-    nombre_cliente = st.text_input(
+    # ⭐ MEJORA: Auto-capitalizar nombre
+    nombre_cliente_raw = st.text_input(
         "Nombre y apellido completo:",
         placeholder="Eduardo López",
         key=f"nombre_{st.session_state.count_reset}"
     )
+    nombre_cliente = capitalizar_texto(nombre_cliente_raw)
     
-    direccion = st.text_input(
+    # ⭐ MEJORA: Auto-capitalizar dirección
+    direccion_raw = st.text_input(
         "Dirección:",
         placeholder="Prat 725",
         key=f"direccion_{st.session_state.count_reset}"
     )
+    direccion = capitalizar_texto(direccion_raw)
     
     numero_cliente = st.text_input(
         "Número cliente:",
@@ -170,7 +212,7 @@ with col2:
 st.markdown("---")
 
 # ================= DATOS ESPECÍFICOS POR TIPO DE CARTA =================
-if tipo_carta == "error_lectura":
+if tipo_carta == "error_lectura_halu":
     with st.expander("📊 DATOS ADICIONALES DE FACTURACIÓN (Opcional)"):
         col_a, col_b, col_c = st.columns(3)
         
@@ -219,6 +261,200 @@ if tipo_carta == "error_lectura":
                 key=f"dia_fin_{st.session_state.count_reset}"
             )
             rango_lectura = f"{dia_inicio} y {dia_fin}" if dia_inicio and dia_fin else ""
+
+elif tipo_carta == "apertura_casa_halu":
+    with st.expander("📊 DATOS ESPECÍFICOS - APERTURA CASA CERRADA", expanded=True):
+        st.markdown("#### 📅 Periodo sin acceso al medidor")
+        
+        col_a, col_b, col_c, col_d = st.columns(4)
+        
+        with col_a:
+            periodo_inicio = st.text_input(
+                "Mes inicio sin acceso:",
+                placeholder="marzo",
+                key=f"periodo_inicio_{st.session_state.count_reset}",
+                help="Ejemplo: marzo, abril, mayo..."
+            )
+        
+        with col_b:
+            anio_inicio = st.text_input(
+                "Año inicio:",
+                placeholder="2024",
+                value="2024",
+                key=f"anio_inicio_{st.session_state.count_reset}",
+                help="Año en que comenzó el periodo sin acceso"
+            )
+        
+        with col_c:
+            periodo_fin = st.text_input(
+                "Mes fin sin acceso:",
+                placeholder="agosto",
+                key=f"periodo_fin_{st.session_state.count_reset}",
+                help="Ejemplo: agosto, septiembre..."
+            )
+        
+        with col_d:
+            anio_fin = st.text_input(
+                "Año fin:",
+                placeholder="2025",
+                value="2025",
+                key=f"anio_fin_{st.session_state.count_reset}",
+                help="Año en que se accedió al medidor"
+            )
+        
+        st.markdown("---")
+        st.markdown("#### 🔢 Número de medidor")
+        
+        numero_medidor = st.text_input(
+            "N° Medidor:",
+            placeholder="E044124",
+            key=f"numero_medidor_{st.session_state.count_reset}",
+            help="Número del medidor eléctrico"
+        )
+        
+        st.markdown("---")
+        st.markdown("#### 📊 Datos de lectura y consumo")
+        
+        col_c, col_d, col_e = st.columns(3)
+        
+        with col_c:
+            fecha_lectura = st.text_input(
+                "Fecha de acceso al medidor:",
+                placeholder="08/08/2025",
+                key=f"fecha_lectura_{st.session_state.count_reset}",
+                help="Fecha en que se logró acceder al medidor"
+            )
+            
+            lectura_kwh = st.text_input(
+                "Lectura registrada (kWh):",
+                placeholder="20041",
+                key=f"lectura_kwh_{st.session_state.count_reset}",
+                help="Lectura total registrada en el medidor"
+            )
+        
+        with col_d:
+            consumo_total = st.text_input(
+                "Consumo total (kWh):",
+                placeholder="756",
+                key=f"consumo_total_{st.session_state.count_reset}",
+                help="Consumo total del periodo"
+            )
+            
+            consumo_provisorio = st.text_input(
+                "Consumo provisorio (kWh):",
+                placeholder="184",
+                key=f"consumo_provisorio_{st.session_state.count_reset}",
+                help="Consumos provisorios descontados"
+            )
+        
+        with col_e:
+            fecha_inicio_periodo = st.text_input(
+                "Fecha inicio periodo:",
+                placeholder="11/03/2025",
+                key=f"fecha_inicio_periodo_{st.session_state.count_reset}"
+            )
+            
+            fecha_fin_periodo = st.text_input(
+                "Fecha fin periodo:",
+                placeholder="08/08/2025",
+                key=f"fecha_fin_periodo_{st.session_state.count_reset}"
+            )
+        
+        st.markdown("---")
+        st.markdown("#### 💰 Monto de ajuste")
+        
+        monto_ajuste_input = st.text_input(
+            "Monto ajuste (reversa):",
+            placeholder="39112",
+            key=f"monto_ajuste_{st.session_state.count_reset}",
+            help="Monto del ajuste en la boleta (reversa)"
+        )
+        monto_ajuste = formatear_monto(monto_ajuste_input) if monto_ajuste_input else ""
+        if monto_ajuste:
+            st.caption(f"💰 Formateado: {monto_ajuste}")
+        
+        st.markdown("---")
+        st.markdown("#### 📅 Historial de consumos")
+        
+        meses_historial = st.text_input(
+            "Meses de historial:",
+            placeholder="24",
+            value="24",
+            key=f"meses_historial_{st.session_state.count_reset}",
+            help="Cantidad de meses del historial (ejemplo: 24)"
+        )
+
+elif tipo_carta == "aumento_consumo_halu_sinvisita":
+    with st.expander("📊 DATOS ESPECÍFICOS - AUMENTO CONSUMO SIN VISITA", expanded=True):
+        st.markdown("#### 📅 Historial de consumos")
+        
+        meses_historial_aumento = st.text_input(
+            "Meses de historial:",
+            placeholder="24",
+            value="24",
+            key=f"meses_historial_aumento_{st.session_state.count_reset}",
+            help="Cantidad de meses del historial de consumo"
+        )
+        
+        st.markdown("---")
+        st.markdown("#### 💰 Rebaja aplicada")
+        
+        monto_rebaja_input = st.text_input(
+            "Monto de rebaja:",
+            placeholder="80058",
+            key=f"monto_rebaja_{st.session_state.count_reset}",
+            help="Monto de la rebaja aplicada por promedio histórico"
+        )
+        monto_rebaja = formatear_monto(monto_rebaja_input) if monto_rebaja_input else ""
+        if monto_rebaja:
+            st.caption(f"💰 Formateado: {monto_rebaja}")
+
+elif tipo_carta == "aumento_consumo_nolu_sinvisita":
+    with st.expander("📊 DATOS ESPECÍFICOS - AUMENTO CONSUMO NOLU SIN VISITA", expanded=True):
+        st.markdown("#### 📅 Historial de consumos")
+        
+        meses_historial_nolu = st.text_input(
+            "Meses de historial:",
+            placeholder="24",
+            value="24",
+            key=f"meses_historial_nolu_{st.session_state.count_reset}",
+            help="Cantidad de meses del historial de consumo"
+        )
+
+elif tipo_carta == "facturaciones_normalizadas":
+    with st.expander("📊 DATOS ESPECÍFICOS - FACTURACIONES NORMALIZADAS", expanded=True):
+        st.markdown("#### 📅 Rango de días de lectura")
+        
+        col_a, col_b = st.columns(2)
+        
+        with col_a:
+            dia_inicio_fn = st.text_input(
+                "Día inicio:",
+                placeholder="15",
+                key=f"dia_inicio_fn_{st.session_state.count_reset}",
+                help="Día de inicio del rango de lectura"
+            )
+        
+        with col_b:
+            dia_fin_fn = st.text_input(
+                "Día fin:",
+                placeholder="20",
+                key=f"dia_fin_fn_{st.session_state.count_reset}",
+                help="Día de fin del rango de lectura"
+            )
+
+elif tipo_carta == "carta_aporte_lectura":
+    with st.expander("📊 DATOS ESPECÍFICOS - APORTE LECTURA", expanded=True):
+        st.markdown("#### 📅 Fecha del requerimiento")
+        
+        fecha_requerimiento = st.text_input(
+            "Fecha del requerimiento:",
+            placeholder="24/11/2025",
+            key=f"fecha_requerimiento_{st.session_state.count_reset}",
+            help="Fecha en que se efectuó el requerimiento"
+        )
+        
+        st.info("ℹ️ El N° de requerimiento se copiará automáticamente del N° GR")
 
 # ================= TABLA EXCEL =================
 with st.expander("📎 TABLA DE DATOS (Opcional - se agrega al final)"):
@@ -308,6 +544,7 @@ if generar:
                     
                     doc = Document(template_path)
                     
+                    # REEMPLAZOS COMUNES
                     reemplazos = {
                         "Valparaiso, 16 de diciembre de [202X]": fecha_completa,
                         "Valparaíso, 16 de diciembre de [202X]": fecha_completa,
@@ -325,21 +562,95 @@ if generar:
                         "[Nombre y apellido Gerente Comercial]": GERENTES[zona],
                     }
 
-                    if tipo_carta == "error_lectura":
-                        if rango_lectura:
+                    # REEMPLAZOS ESPECÍFICOS POR TIPO DE CARTA
+                    if tipo_carta == "error_lectura_halu":
+                        if 'rango_lectura' in locals() and rango_lectura:
                             reemplazos["[XXXXXX y XXXXXX.]"] = f"{rango_lectura}."
                             reemplazos["[XXXXXX y XXXXXX]"] = rango_lectura
                             reemplazos["XXXXXX y XXXXXX"] = rango_lectura
-                        if fecha_boleta:
+                        if 'fecha_boleta' in locals() and fecha_boleta:
                             reemplazos["[día/mes/año]"] = fecha_boleta
-                        if tipo_doc:
+                        if 'tipo_doc' in locals() and tipo_doc:
                             reemplazos["[boleta/factura]"] = tipo_doc
                         if 'numero_boleta' in locals() and numero_boleta:
                             reemplazos["[XXXXXX]"] = numero_boleta
-                        if consumo_kwh:
+                        if 'consumo_kwh' in locals() and consumo_kwh:
                             reemplazos["XXX kWh"] = f"{consumo_kwh} kWh"
-                        if monto_boleta:
+                        if 'monto_boleta' in locals() and monto_boleta:
                             reemplazos["[$ XX.XXX]"] = monto_boleta
+                    
+                    elif tipo_carta == "apertura_casa_halu":
+                        # Periodo sin acceso (con año inicio y fin)
+                        if 'periodo_inicio' in locals() and periodo_inicio and 'periodo_fin' in locals() and periodo_fin and 'anio_inicio' in locals() and anio_inicio and 'anio_fin' in locals() and anio_fin:
+                            # Si es el mismo año: "marzo a agosto del 2025"
+                            if anio_inicio == anio_fin:
+                                periodo_texto = f"{periodo_inicio} a {periodo_fin} del {anio_fin}"
+                            else:
+                                # Si son años diferentes: "marzo del 2024 a agosto del 2025"
+                                periodo_texto = f"{periodo_inicio} del {anio_inicio} a {periodo_fin} del {anio_fin}"
+                            reemplazos["[marzo a agosto del 2025]"] = periodo_texto
+                        
+                        # Número de medidor
+                        if 'numero_medidor' in locals() and numero_medidor:
+                            reemplazos["[E044124]"] = numero_medidor
+                        
+                        # Fecha de lectura
+                        if 'fecha_lectura' in locals() and fecha_lectura:
+                            reemplazos["[08/08/2025]"] = fecha_lectura
+                        
+                        # Lectura registrada
+                        if 'lectura_kwh' in locals() and lectura_kwh:
+                            reemplazos["[20.041]"] = lectura_kwh
+                            reemplazos["[20041]"] = lectura_kwh
+                        
+                        # Consumo total
+                        if 'consumo_total' in locals() and consumo_total:
+                            reemplazos["[756]"] = consumo_total
+                        
+                        # Periodo completo
+                        if 'fecha_inicio_periodo' in locals() and fecha_inicio_periodo and 'fecha_fin_periodo' in locals() and fecha_fin_periodo:
+                            periodo_completo = f"{fecha_inicio_periodo} a {fecha_fin_periodo}"
+                            reemplazos["[11/03/2025 a 08/08/2025]"] = periodo_completo
+                        
+                        # Consumo provisorio
+                        if 'consumo_provisorio' in locals() and consumo_provisorio:
+                            reemplazos["[184]"] = consumo_provisorio
+                        
+                        # Monto ajuste
+                        if 'monto_ajuste' in locals() and monto_ajuste:
+                            reemplazos["[$39.112]"] = monto_ajuste
+                        
+                        # Meses de historial
+                        if 'meses_historial' in locals() and meses_historial:
+                            reemplazos["[24]"] = meses_historial
+                    
+                    elif tipo_carta == "aumento_consumo_halu_sinvisita":
+                        # Meses de historial
+                        if 'meses_historial_aumento' in locals() and meses_historial_aumento:
+                            reemplazos["[24]"] = meses_historial_aumento
+                        
+                        # Monto de rebaja
+                        if 'monto_rebaja' in locals() and monto_rebaja:
+                            reemplazos["[$80.058]"] = monto_rebaja
+                    
+                    elif tipo_carta == "aumento_consumo_nolu_sinvisita":
+                        # Meses de historial
+                        if 'meses_historial_nolu' in locals() and meses_historial_nolu:
+                            reemplazos["[24]"] = meses_historial_nolu
+                    
+                    elif tipo_carta == "facturaciones_normalizadas":
+                        # Rango de días
+                        if 'dia_inicio_fn' in locals() and dia_inicio_fn and 'dia_fin_fn' in locals() and dia_fin_fn:
+                            rango_dias = f"{dia_inicio_fn} y {dia_fin_fn}"
+                            reemplazos["[15 y 20]"] = rango_dias
+                    
+                    elif tipo_carta == "carta_aporte_lectura":
+                        # N° de requerimiento (igual que GR)
+                        reemplazos["[15939748]"] = gr_numero
+                        
+                        # Fecha del requerimiento
+                        if 'fecha_requerimiento' in locals() and fecha_requerimiento:
+                            reemplazos["[24/11/2025]"] = fecha_requerimiento
                     
                     reemplazos_ordenados = sorted(reemplazos.items(), key=lambda x: len(x[0]), reverse=True)
                     
@@ -408,7 +719,7 @@ if generar:
                                 table.rows[i+1].cells[j].text = str(value)
                     
                     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    filename = f"Carta_{gr_numero}_{timestamp}.docx"
+                    filename = f"Carta_{tipo_carta}_{gr_numero}_{timestamp}.docx"
                     output_path = os.path.join("output", filename)
                     doc.save(output_path)
                     
@@ -436,6 +747,8 @@ if generar:
 
                 except Exception as e:
                     st.error(f"❌ Error: {str(e)}")
+                    with st.expander("🔍 Ver detalles del error"):
+                        st.code(str(e))
 
 # MOSTRAR VISTA PREVIA
 if st.session_state.get('carta_generada') and 'vista_previa_html' in st.session_state:
