@@ -47,7 +47,7 @@ GERENTES = {
 # ================= CATEGORÍAS Y TIPOS DE CARTAS =================
 CATEGORIAS = {
     "Cobros": {
-        "apertura_casa_halu": "Apertura Casa Cerrada HALU",
+        "apertura_casa_halu": "Apertura Casa Cerrada NOLU",
         "carta_aporte_lectura": "Aporte Lectura",
         "atencion_emergencia_halu": "Atención de Emergencias HALU",
         "aumento_consumo_halu_sinvisita": "Aumento Consumo HALU Sin visita técnica",
