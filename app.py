@@ -95,6 +95,38 @@ def capitalizar_texto(texto):
         return texto.title()
     return texto
 
+def formatear_fecha(fecha_input):
+    """
+    Formatea fecha de DDMMYYYY a DD/MM/YYYY
+    20022025 → 20/02/2025
+    También acepta ya formateadas: 20/02/2025 → 20/02/2025
+    """
+    if not fecha_input:
+        return fecha_input
+    
+    # Limpiar entrada (quitar espacios, guiones, puntos, barras)
+    fecha_limpia = str(fecha_input).replace('/', '').replace('-', '').replace('.', '').replace(' ', '').strip()
+    
+    # Si tiene exactamente 8 dígitos, formatear
+    if len(fecha_limpia) == 8 and fecha_limpia.isdigit():
+        dia = fecha_limpia[0:2]
+        mes = fecha_limpia[2:4]
+        anio = fecha_limpia[4:8]
+        
+        # Validación básica
+        try:
+            dia_int = int(dia)
+            mes_int = int(mes)
+            anio_int = int(anio)
+            
+            if 1 <= dia_int <= 31 and 1 <= mes_int <= 12 and 2000 <= anio_int <= 2100:
+                return f"{dia}/{mes}/{anio}"
+        except:
+            pass
+    
+    # Si ya está formateada o no es válida, devolver tal cual
+    return fecha_input
+
 # ================= HEADER =================
 st.markdown("""
 <div style='background:linear-gradient(90deg,#1e40af,#0ea5e9);
@@ -193,6 +225,34 @@ with col2:
         autocomplete="off"
     )
     
+    # ⭐ NUEVO: Campo opcional para casos SEC/SERNAC
+    tiene_caso_sec = st.checkbox(
+        "¿Es un caso SEC/SERNAC?",
+        key=f"tiene_caso_sec_{st.session_state.count_reset}",
+        help="Marcar si el reclamo viene de Portal SEC o Portal SERNAC"
+    )
+    
+    caso_sec_numero = ""
+    tipo_caso = ""
+    if tiene_caso_sec:
+        col_sec1, col_sec2 = st.columns(2)
+        
+        with col_sec1:
+            tipo_caso = st.selectbox(
+                "Tipo:",
+                ["SEC", "SERNAC"],
+                key=f"tipo_caso_{st.session_state.count_reset}",
+                help="Seleccione si es SEC o SERNAC"
+            )
+        
+        with col_sec2:
+            caso_sec_numero = st.text_input(
+                f"N° Caso {tipo_caso}:",
+                placeholder="123456",
+                key=f"caso_sec_numero_{st.session_state.count_reset}",
+                help=f"Número del caso en {tipo_caso}"
+            )
+    
     zona = st.selectbox(
         "Firma - Zona Geográfica:",
         ["Norte", "Centro", "Sur"],
@@ -225,11 +285,15 @@ if tipo_carta == "error_lectura_halu":
         col_a, col_b, col_c = st.columns(3)
         
         with col_a:
-            fecha_boleta = st.text_input(
+            fecha_boleta_raw = st.text_input(
                 "Fecha boleta:", 
-                placeholder="15/12/2025",
-                key=f"fecha_boleta_{st.session_state.count_reset}"
+                placeholder="20122025 o 20/12/2025",
+                key=f"fecha_boleta_{st.session_state.count_reset}",
+                help="Formato: DDMMYYYY (ej: 20122025) o DD/MM/YYYY"
             )
+            fecha_boleta = formatear_fecha(fecha_boleta_raw)
+            if fecha_boleta_raw and fecha_boleta != fecha_boleta_raw:
+                st.caption(f"📅 Formateado: {fecha_boleta}")
             tipo_doc = st.selectbox(
                 "Tipo documento:", 
                 ["boleta", "factura"],
@@ -326,12 +390,15 @@ elif tipo_carta == "apertura_casa_halu":
         col_c, col_d, col_e = st.columns(3)
         
         with col_c:
-            fecha_lectura = st.text_input(
+            fecha_lectura_raw = st.text_input(
                 "Fecha de acceso al medidor:",
-                placeholder="08/08/2025",
+                placeholder="08082025 o 08/08/2025",
                 key=f"fecha_lectura_{st.session_state.count_reset}",
                 help="Fecha en que se logró acceder al medidor"
             )
+            fecha_lectura = formatear_fecha(fecha_lectura_raw)
+            if fecha_lectura_raw and fecha_lectura != fecha_lectura_raw:
+                st.caption(f"📅 Formateado: {fecha_lectura}")
             
             lectura_kwh = st.text_input(
                 "Lectura registrada (kWh):",
@@ -356,33 +423,39 @@ elif tipo_carta == "apertura_casa_halu":
             )
         
         with col_e:
-            fecha_inicio_periodo = st.text_input(
-                "Fecha inicio periodo:",
-                placeholder="11/03/2025",
+            fecha_inicio_periodo_raw = st.text_input(
+                "Fecha inicio periodo apertura:",
+                placeholder="11032025 o 11/03/2025",
                 key=f"fecha_inicio_periodo_{st.session_state.count_reset}"
             )
+            fecha_inicio_periodo = formatear_fecha(fecha_inicio_periodo_raw)
+            if fecha_inicio_periodo_raw and fecha_inicio_periodo != fecha_inicio_periodo_raw:
+                st.caption(f"📅 Formateado: {fecha_inicio_periodo}")
             
-            fecha_fin_periodo = st.text_input(
-                "Fecha fin periodo:",
-                placeholder="08/08/2025",
+            fecha_fin_periodo_raw = st.text_input(
+                "Fecha fin periodo apertura:",
+                placeholder="08082025 o 08/08/2025",
                 key=f"fecha_fin_periodo_{st.session_state.count_reset}"
             )
+            fecha_fin_periodo = formatear_fecha(fecha_fin_periodo_raw)
+            if fecha_fin_periodo_raw and fecha_fin_periodo != fecha_fin_periodo_raw:
+                st.caption(f"📅 Formateado: {fecha_fin_periodo}")
         
         st.markdown("---")
-        st.markdown("#### 💰 Monto de ajuste")
+        st.markdown("#### 💰 Reversa de Electricidad")
         
         monto_ajuste_input = st.text_input(
-            "Monto ajuste (reversa):",
+            "Monto reversa:",
             placeholder="39112",
             key=f"monto_ajuste_{st.session_state.count_reset}",
-            help="Monto del ajuste en la boleta (reversa)"
+            help="Monto de la reversa de electricidad"
         )
         monto_ajuste = formatear_monto(monto_ajuste_input) if monto_ajuste_input else ""
         if monto_ajuste:
             st.caption(f"💰 Formateado: {monto_ajuste}")
         
         st.markdown("---")
-        st.markdown("#### 📅 Historial de consumos")
+        st.markdown("#### 📅 Historial de consumos (BO)")
         
         meses_historial = st.text_input(
             "Meses de historial:",
@@ -465,12 +538,15 @@ elif tipo_carta == "carta_aporte_lectura":
     with st.expander("📊 DATOS ESPECÍFICOS - APORTE LECTURA", expanded=True):
         st.markdown("#### 📅 Fecha del requerimiento")
         
-        fecha_requerimiento = st.text_input(
+        fecha_requerimiento_raw = st.text_input(
             "Fecha del requerimiento:",
-            placeholder="24/11/2025",
+            placeholder="24112025 o 24/11/2025",
             key=f"fecha_requerimiento_{st.session_state.count_reset}",
             help="Fecha en que se efectuó el requerimiento"
         )
+        fecha_requerimiento = formatear_fecha(fecha_requerimiento_raw)
+        if fecha_requerimiento_raw and fecha_requerimiento != fecha_requerimiento_raw:
+            st.caption(f"📅 Formateado: {fecha_requerimiento}")
         
         st.info("ℹ️ El N° de requerimiento se copiará automáticamente del N° GR")
 
@@ -497,7 +573,7 @@ elif tipo_carta == "error_lectura_regularizado_sgte_lectura":
             )
         
         st.markdown("---")
-        st.markdown("#### 📅 Historial de consumos")
+        st.markdown("#### 📅 Historial de consumos (BO)")
         
         meses_historial_reg = st.text_input(
             "Meses de historial:",
@@ -535,12 +611,17 @@ elif tipo_carta == "error_lectura_nolu":
         col_c, col_d = st.columns(2)
         
         with col_c:
-            fecha_factura_nolu = st.text_input(
+            fecha_factura_nolu_raw = st.text_input(
                 "Fecha factura:",
-                placeholder="15.12.2025",
+                placeholder="15122025 o 15.12.2025",
                 key=f"fecha_factura_nolu_{st.session_state.count_reset}",
-                help="Fecha de la factura (formato: dd.mm.yyyy)"
+                help="Fecha de la factura (se formateará con puntos: dd.mm.yyyy)"
             )
+            # Para esta carta específica, formatear con PUNTOS en lugar de barras
+            fecha_temp = formatear_fecha(fecha_factura_nolu_raw)
+            fecha_factura_nolu = fecha_temp.replace('/', '.') if fecha_temp else ""
+            if fecha_factura_nolu_raw and fecha_factura_nolu != fecha_factura_nolu_raw:
+                st.caption(f"📅 Formateado: {fecha_factura_nolu}")
         
         with col_d:
             monto_factura_nolu_input = st.text_input(
@@ -560,23 +641,37 @@ elif tipo_carta == "atencion_emergencia_halu":
         col_a, col_b = st.columns(2)
         
         with col_a:
-            fecha_solicitud_emerg = st.text_input(
+            fecha_solicitud_emerg_raw = st.text_input(
                 "Fecha solicitud:",
-                placeholder="03/10/2025",
+                placeholder="03102025 o 03/10/2025",
                 key=f"fecha_solicitud_emerg_{st.session_state.count_reset}",
                 help="Fecha de la solicitud de emergencia"
             )
+            fecha_solicitud_emerg = formatear_fecha(fecha_solicitud_emerg_raw)
+            if fecha_solicitud_emerg_raw and fecha_solicitud_emerg != fecha_solicitud_emerg_raw:
+                st.caption(f"📅 Formateado: {fecha_solicitud_emerg}")
         
         with col_b:
-            fecha_atencion_emerg = st.text_input(
+            fecha_atencion_emerg_raw = st.text_input(
                 "Fecha atención:",
-                placeholder="15/10/2025",
+                placeholder="15102025 o 15/10/2025",
                 key=f"fecha_atencion_emerg_{st.session_state.count_reset}",
                 help="Fecha en que se atendió la emergencia"
             )
+            fecha_atencion_emerg = formatear_fecha(fecha_atencion_emerg_raw)
+            if fecha_atencion_emerg_raw and fecha_atencion_emerg != fecha_atencion_emerg_raw:
+                st.caption(f"📅 Formateado: {fecha_atencion_emerg}")
         
         st.markdown("---")
         st.markdown("#### 👤 Persona que solicitó atención emergencias")
+        
+        # ⭐ NUEVO: Selector de Señor/Señora para quien solicitó
+        tratamiento_solicitante = st.selectbox(
+            "Formalidad (Señor o Señora):",
+            ["", "Señor", "Señora"],
+            key=f"tratamiento_solicitante_{st.session_state.count_reset}",
+            help="Tratamiento de quien solicitó la emergencia (puede ser distinto a quien va dirigida la carta)"
+        )
         
         nombre_solicitante_raw = st.text_input(
             "Nombre completo:",
@@ -729,7 +824,10 @@ if generar:
                         "Valparaíso": comuna,
                         "[Comuna]": comuna,
                         "DGR N.º XXXXXXX /[202X]": f"DGR N° {gr_numero} /{hoy.year}",
+                        # Variantes de Ref.: Reclamo (se reemplazará después si hay caso SEC)
                         "Ref.: Reclamo N° 15965848": f"Ref.: Reclamo N° {gr_numero}",
+                        "Ref.: Reclamo N° XXXXXXX": f"Ref.: Reclamo N° {gr_numero}",
+                        "Reclamo N° XXXXXXX": f"Ref.: Reclamo N° {gr_numero}",  # Agrega "Ref.:" si falta
                         "Número de cliente: 15965848": f"Número de cliente: {numero_cliente}",
                         "[Señor(a)]": tratamiento,
                         "[Nombre y apellido reclamante]": nombre_cliente,
@@ -738,6 +836,17 @@ if generar:
                         "[(Ej: nuestra Oficina Comercial / WhatsApp / App CGE 1Click / Call Center / Correo Electrónico / Página Web).]": f"{texto_canal}.",
                         "[Nombre y apellido Gerente Comercial]": GERENTES[zona],
                     }
+                    
+                    # Caso SEC/SERNAC (opcional)
+                    # Si hay caso SEC/SERNAC, reemplaza COMPLETAMENTE la línea de Reclamo
+                    # Si NO hay, deja solo "Ref.: Reclamo N°"
+                    if tiene_caso_sec and caso_sec_numero and tipo_caso:
+                        # Reemplazar COMPLETAMENTE con la línea de Caso SEC/SERNAC
+                        texto_caso = f"Ref.: Caso {tipo_caso} N° {caso_sec_numero}, Reclamo N° {gr_numero}"
+                        reemplazos["Ref.: Reclamo N° XXXXXXX"] = texto_caso
+                        reemplazos["Reclamo N° XXXXXXX"] = texto_caso
+                    # Si no hay caso SEC, ya se reemplazó arriba con "Ref.: Reclamo N° {gr_numero}"
+
 
                     # REEMPLAZOS ESPECÍFICOS POR TIPO DE CARTA
                     if tipo_carta == "error_lectura_halu":
@@ -853,9 +962,15 @@ if generar:
                         if 'fecha_factura_nolu' in locals() and fecha_factura_nolu:
                             reemplazos["[15.12.2025]"] = fecha_factura_nolu
                         
-                        # Monto factura
-                        if 'monto_factura_nolu' in locals() and monto_factura_nolu:
-                            reemplazos["[36.745]"] = monto_factura_nolu
+                        # Lectura kWh (SIN signo $, solo número con puntos)
+                        if 'monto_factura_nolu_input' in locals() and monto_factura_nolu_input:
+                            # Formatear solo con puntos de miles, sin $
+                            valor_limpio = str(monto_factura_nolu_input).replace('$', '').replace('.', '').replace(',', '').strip()
+                            if valor_limpio:
+                                numero = int(valor_limpio)
+                                lectura_formateada = f"{numero:,}".replace(',', '.')
+                                reemplazos["[$65.000]"] = lectura_formateada
+                                reemplazos["[36.745]"] = lectura_formateada
                     
                     elif tipo_carta == "atencion_emergencia_halu":
                         # Fechas
@@ -865,9 +980,16 @@ if generar:
                         if 'fecha_atencion_emerg' in locals() and fecha_atencion_emerg:
                             reemplazos["[15/10/2025]"] = fecha_atencion_emerg
                         
-                        # Persona solicitante
-                        if 'nombre_solicitante' in locals() and nombre_solicitante:
+                        # Persona solicitante con "el Sr." o "la Sra."
+                        if 'nombre_solicitante' in locals() and nombre_solicitante and 'tratamiento_solicitante' in locals() and tratamiento_solicitante:
+                            # Determinar artículo según tratamiento DEL SOLICITANTE (no del destinatario)
+                            if tratamiento_solicitante == "Señor":
+                                texto_solicitante = f"el Sr. {nombre_solicitante}"
+                            else:  # Señora
+                                texto_solicitante = f"la Sra. {nombre_solicitante}"
+                            
                             reemplazos["[Mariana Lidia Espinoza Osorio]"] = nombre_solicitante
+                            reemplazos["[el(a) Sr(a). XXXXXX XXXXXX]"] = texto_solicitante
                         
                         # Nota de crédito
                         if 'nota_credito' in locals() and nota_credito:
