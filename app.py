@@ -139,8 +139,8 @@ padding:25px;border-radius:12px;margin-bottom:25px;box-shadow:0 4px 6px rgba(0,0
 # ================= SELECTOR DE CATEGORÍA Y CARTA =================
 st.markdown("### 📋 SELECCIONAR TIPO DE CARTA")
 
-# Crear 3 columnas: Categoría (35%), Tipo carta (35%), Botón reiniciar (30%)
-col_cat, col_tipo, col_reset = st.columns([1.4, 1.4, 1])
+# Crear 2 columnas: Categoría (50%), Tipo carta (50%)
+col_cat, col_tipo = st.columns(2)
 
 with col_cat:
     # Selector de Categoría
@@ -150,11 +150,6 @@ with col_cat:
         key=f"categoria_{st.session_state.count_reset}"
     )
 
-# Mostrar info si la categoría está vacía
-if not CATEGORIAS[categoria]:
-    st.info(f"ℹ️ La categoría '{categoria}' aún no tiene cartas disponibles. Se agregarán próximamente.")
-    st.stop()
-
 with col_tipo:
     # Selector de Carta (según categoría seleccionada)
     tipo_carta = st.selectbox(
@@ -162,11 +157,17 @@ with col_tipo:
         options=list(CATEGORIAS[categoria].keys()),
         format_func=lambda x: CATEGORIAS[categoria][x],
         key=f"tipo_carta_{st.session_state.count_reset}"
-    )
+    ) if CATEGORIAS[categoria] else None
 
-with col_reset:
-    st.markdown("<div style='margin-top: 0px;'></div>", unsafe_allow_html=True)  # Sin margen adicional
-    
+# Mostrar info si la categoría está vacía
+if not CATEGORIAS[categoria]:
+    st.info(f"ℹ️ La categoría '{categoria}' aún no tiene cartas disponibles. Se agregarán próximamente.")
+    st.stop()
+
+# Botón reiniciar DEBAJO a la IZQUIERDA (alineado con Categoría)
+col_reset_left, col_empty = st.columns([1, 1])
+
+with col_reset_left:
     # Botón reiniciar con estilo personalizado (Naranja con borde negro)
     st.markdown("""
         <style>
