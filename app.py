@@ -139,55 +139,73 @@ padding:25px;border-radius:12px;margin-bottom:25px;box-shadow:0 4px 6px rgba(0,0
 # ================= SELECTOR DE CATEGORÍA Y CARTA =================
 st.markdown("### 📋 SELECCIONAR TIPO DE CARTA")
 
-# Crear 2 columnas: Categoría (50%), Tipo carta (50%)
-col_cat, col_tipo = st.columns(2)
+# Crear dos columnas: una para los selectores (columna), otra para el botón
+col_selectores, col_boton = st.columns([2, 1])
 
-with col_cat:
+with col_selectores:
     # Selector de Categoría
     categoria = st.selectbox(
         "Categoría:",
         options=list(CATEGORIAS.keys()),
         key=f"categoria_{st.session_state.count_reset}"
     )
-
-with col_tipo:
-    # Selector de Carta (según categoría seleccionada)
+    
+    # Mostrar info si la categoría está vacía
+    if not CATEGORIAS[categoria]:
+        st.info(f"ℹ️ La categoría '{categoria}' aún no tiene cartas disponibles. Se agregarán próximamente.")
+        st.stop()
+    
+    # Selector de Carta
     tipo_carta = st.selectbox(
         "Tipo de carta:",
         options=list(CATEGORIAS[categoria].keys()),
         format_func=lambda x: CATEGORIAS[categoria][x],
         key=f"tipo_carta_{st.session_state.count_reset}"
-    ) if CATEGORIAS[categoria] else None
+    )
 
-# Mostrar info si la categoría está vacía
-if not CATEGORIAS[categoria]:
-    st.info(f"ℹ️ La categoría '{categoria}' aún no tiene cartas disponibles. Se agregarán próximamente.")
-    st.stop()
-
-# Botón reiniciar DEBAJO a la IZQUIERDA (alineado con Categoría)
-col_reset_left, col_empty = st.columns([1, 1])
-
-with col_reset_left:
-    # Botón reiniciar con estilo personalizado (Naranja con borde negro)
+with col_boton:
+    # Espaciador para alinear verticalmente con la categoría
+    st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+    
+    # Estilo para el botón rectangular - BLANCO con NEGRO
     st.markdown("""
         <style>
         div[data-testid="stButton"] button[kind="secondary"] {
-            background-color: #ea580c !important;
-            color: white !important;
-            border: 3px solid #000000 !important;
+            background-color: white !important;
+            background: white !important;
+            color: black !important;
+            border: 2px solid #000000 !important;
             font-weight: 700 !important;
+            font-size: 0.9rem !important;
             border-radius: 8px !important;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
-            transition: all 0.2s !important;
+            padding: 12px 8px !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+            transition: all 0.3s !important;
+            width: 100% !important;
+            height: 60px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-align: center !important;
+            white-space: normal !important;
+            line-height: 1.2 !important;
         }
         div[data-testid="stButton"] button[kind="secondary"]:hover {
-            background-color: #c2410c !important;
-            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.25) !important;
-            transform: translateY(-2px) !important;
+            background-color: #f0f0f0 !important;
+            background: #f0f0f0 !important;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
+            transform: scale(1.02) !important;
+            border-color: #000000 !important;
+            color: black !important;
+        }
+        div[data-testid="stButton"] button[kind="secondary"]:active {
+            transform: scale(0.98) !important;
+            background-color: #e0e0e0 !important;
         }
         </style>
     """, unsafe_allow_html=True)
     
+    # Botón rectangular con texto
     if st.button("🔄 REINICIAR FORMULARIO", type="secondary", use_container_width=True, key=f"btn_reset_{st.session_state.count_reset}"):
         st.session_state.count_reset += 1 
         st.session_state.carta_generada = False
