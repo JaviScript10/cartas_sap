@@ -47,7 +47,7 @@ GERENTES = {
 # ================= CATEGORÍAS Y TIPOS DE CARTAS =================
 CATEGORIAS = {
     "Cobros": {
-        "apertura_casa_halu": "Apertura Casa Cerrada NOLU",
+        "apertura_casa_halu": "Apertura Casa Cerrada HALU",
         "carta_aporte_lectura": "Aporte Lectura",
         "atencion_emergencia_halu": "Atención de Emergencias HALU",
         "aumento_consumo_halu_sinvisita": "Aumento Consumo HALU Sin visita técnica",
@@ -139,33 +139,62 @@ padding:25px;border-radius:12px;margin-bottom:25px;box-shadow:0 4px 6px rgba(0,0
 # ================= SELECTOR DE CATEGORÍA Y CARTA =================
 st.markdown("### 📋 SELECCIONAR TIPO DE CARTA")
 
-# Selector de Categoría
-categoria = st.selectbox(
-    "1️⃣ Categoría:",
-    options=list(CATEGORIAS.keys()),
-    key=f"categoria_{st.session_state.count_reset}"
-)
+# Crear 3 columnas: Categoría (35%), Tipo carta (35%), Botón reiniciar (30%)
+col_cat, col_tipo, col_reset = st.columns([1.4, 1.4, 1])
+
+with col_cat:
+    # Selector de Categoría
+    categoria = st.selectbox(
+        "Categoría:",
+        options=list(CATEGORIAS.keys()),
+        key=f"categoria_{st.session_state.count_reset}"
+    )
 
 # Mostrar info si la categoría está vacía
 if not CATEGORIAS[categoria]:
     st.info(f"ℹ️ La categoría '{categoria}' aún no tiene cartas disponibles. Se agregarán próximamente.")
     st.stop()
 
-# Selector de Carta (según categoría seleccionada)
-tipo_carta = st.selectbox(
-    "2️⃣ Tipo de carta:",
-    options=list(CATEGORIAS[categoria].keys()),
-    format_func=lambda x: CATEGORIAS[categoria][x],
-    key=f"tipo_carta_{st.session_state.count_reset}"
-)
+with col_tipo:
+    # Selector de Carta (según categoría seleccionada)
+    tipo_carta = st.selectbox(
+        "Tipo de carta:",
+        options=list(CATEGORIAS[categoria].keys()),
+        format_func=lambda x: CATEGORIAS[categoria][x],
+        key=f"tipo_carta_{st.session_state.count_reset}"
+    )
 
-# ================= BOTÓN REINICIAR =================
-if st.button("🔄 REINICIAR FORMULARIO"):
-    st.session_state.count_reset += 1 
-    st.session_state.carta_generada = False
-    st.session_state.output_path = None
-    st.session_state.vista_previa_html = None
-    st.rerun()
+with col_reset:
+    st.markdown("<div style='margin-top: 0px;'></div>", unsafe_allow_html=True)  # Sin margen adicional
+    
+    # Botón reiniciar con estilo personalizado (Naranja con borde negro)
+    st.markdown("""
+        <style>
+        div[data-testid="stButton"] button[kind="secondary"] {
+            background-color: #ea580c !important;
+            color: white !important;
+            border: 3px solid #000000 !important;
+            font-weight: 700 !important;
+            border-radius: 8px !important;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+            transition: all 0.2s !important;
+        }
+        div[data-testid="stButton"] button[kind="secondary"]:hover {
+            background-color: #c2410c !important;
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.25) !important;
+            transform: translateY(-2px) !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    
+    if st.button("🔄 REINICIAR FORMULARIO", type="secondary", use_container_width=True, key=f"btn_reset_{st.session_state.count_reset}"):
+        st.session_state.count_reset += 1 
+        st.session_state.carta_generada = False
+        st.session_state.output_path = None
+        st.session_state.vista_previa_html = None
+        st.rerun()
+
+st.markdown("---")
 
 # ================= FORMULARIO =================
 col1, col2 = st.columns(2)
@@ -727,22 +756,25 @@ elif tipo_carta in ["carta_compromiso", "carta_compromiso_i5", "normal_avance"]:
 
 # ================= TABLA EXCEL =================
 with st.expander("📎 TABLA DE DATOS (Opcional - se agrega al final)"):
+    st.warning("⚙️ **Funcionalidad en desarrollo** - Próximamente podrás adjuntar tablas dinámicas de Excel")
     st.info("💡 Copia y pega tabla desde Excel usando TAB como separador")
     tabla_excel = st.text_area(
         "Pegar datos aquí:",
         height=150,
         placeholder="Período\tConsumo\tMonto\nEne-2025\t150\t$45.000",
-        key=f"tabla_excel_{st.session_state.count_reset}"
+        key=f"tabla_excel_{st.session_state.count_reset}",
+        disabled=True  # Deshabilitado mientras está en desarrollo
     )
     
+    # TEMPORALMENTE DESHABILITADO - En desarrollo
     df = None
-    if tabla_excel:
-        try:
-            df = pd.read_csv(StringIO(tabla_excel), sep="\t")
-            st.success(f"✅ {len(df)} filas cargadas")
-            st.dataframe(df, use_container_width=True)
-        except:
-            st.error("⚠️ Formato incorrecto. Asegúrate de separar con TAB")
+    # if tabla_excel:
+    #     try:
+    #         df = pd.read_csv(StringIO(tabla_excel), sep="\t")
+    #         st.success(f"✅ {len(df)} filas cargadas")
+    #         st.dataframe(df, use_container_width=True)
+    #     except:
+    #         st.error("⚠️ Formato incorrecto. Asegúrate de separar con TAB")
 
 st.markdown("---")
 
@@ -1118,7 +1150,7 @@ with col1:
 with col2:
     st.metric("📄 Templates", len([f for f in os.listdir('templates') if f.endswith('.docx')]))
 with col3:
-    st.metric("⏱️ Tiempo", "~60 seg")
+    st.metric("⏱️ Generación", "< 60 seg")
 
 st.markdown(f"""
 <div style='text-align:center;padding:20px;color:#64748b;font-size:0.9em'>
