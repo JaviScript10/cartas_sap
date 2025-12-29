@@ -47,7 +47,7 @@ GERENTES = {
 # ================= CATEGORÍAS Y TIPOS DE CARTAS =================
 CATEGORIAS = {
     "Cobros": {
-        "apertura_casa_halu": "Apertura Casa Cerrada NOLU",
+        "apertura_casa_nolu": "Apertura Casa Cerrada NOLU",
         "carta_aporte_lectura": "Aporte Lectura",
         "atencion_emergencia_halu": "Atención de Emergencias HALU",
         "aumento_consumo_halu_sinvisita": "Aumento Consumo HALU Sin visita técnica",
@@ -82,6 +82,20 @@ def formatear_monto(valor):
         if valor_limpio:
             numero = int(valor_limpio)
             return f"${numero:,}".replace(',', '.')
+        return valor
+    except:
+        return valor
+
+def formatear_numero_kwh(valor):
+    """
+    Formatea número con puntos de miles (sin $)
+    6500 → 6.500
+    """
+    try:
+        valor_limpio = str(valor).replace('.', '').replace(',', '').strip()
+        if valor_limpio:
+            numero = int(valor_limpio)
+            return f"{numero:,}".replace(',', '.')
         return valor
     except:
         return valor
@@ -382,8 +396,8 @@ if tipo_carta == "error_lectura_halu":
             )
             rango_lectura = f"{dia_inicio} y {dia_fin}" if dia_inicio and dia_fin else ""
 
-elif tipo_carta == "apertura_casa_halu":
-    with st.expander("📊 DATOS ESPECÍFICOS - APERTURA CASA CERRADA", expanded=True):
+elif tipo_carta == "apertura_casa_nolu":
+    with st.expander("📊 DATOS ESPECÍFICOS - APERTURA CASA CERRADA NOLU", expanded=True):
         st.markdown("#### 📅 Periodo sin acceso al medidor")
         
         col_a, col_b, col_c, col_d = st.columns(4)
@@ -448,27 +462,36 @@ elif tipo_carta == "apertura_casa_halu":
             if fecha_lectura_raw and fecha_lectura != fecha_lectura_raw:
                 st.caption(f"📅 Formateado: {fecha_lectura}")
             
-            lectura_kwh = st.text_input(
+            lectura_kwh_raw = st.text_input(
                 "Lectura registrada (kWh):",
                 placeholder="20041",
                 key=f"lectura_kwh_{st.session_state.count_reset}",
                 help="Lectura total registrada en el medidor"
             )
+            lectura_kwh = formatear_numero_kwh(lectura_kwh_raw) if lectura_kwh_raw else ""
+            if lectura_kwh_raw and lectura_kwh != lectura_kwh_raw:
+                st.caption(f"🔢 Formateado: {lectura_kwh}")
         
         with col_d:
-            consumo_total = st.text_input(
+            consumo_total_raw = st.text_input(
                 "Consumo total (kWh):",
                 placeholder="756",
                 key=f"consumo_total_{st.session_state.count_reset}",
                 help="Consumo total del periodo"
             )
+            consumo_total = formatear_numero_kwh(consumo_total_raw) if consumo_total_raw else ""
+            if consumo_total_raw and consumo_total != consumo_total_raw:
+                st.caption(f"🔢 Formateado: {consumo_total}")
             
-            consumo_provisorio = st.text_input(
+            consumo_provisorio_raw = st.text_input(
                 "Consumo provisorio (kWh):",
                 placeholder="184",
                 key=f"consumo_provisorio_{st.session_state.count_reset}",
                 help="Consumos provisorios descontados"
             )
+            consumo_provisorio = formatear_numero_kwh(consumo_provisorio_raw) if consumo_provisorio_raw else ""
+            if consumo_provisorio_raw and consumo_provisorio != consumo_provisorio_raw:
+                st.caption(f"🔢 Formateado: {consumo_provisorio}")
         
         with col_e:
             fecha_inicio_periodo_raw = st.text_input(
@@ -916,7 +939,7 @@ if generar:
                         if 'monto_boleta' in locals() and monto_boleta:
                             reemplazos["[$ XX.XXX]"] = monto_boleta
                     
-                    elif tipo_carta == "apertura_casa_halu":
+                    elif tipo_carta == "apertura_casa_nolu":
                         # Periodo sin acceso (con año inicio y fin)
                         if 'periodo_inicio' in locals() and periodo_inicio and 'periodo_fin' in locals() and periodo_fin and 'anio_inicio' in locals() and anio_inicio and 'anio_fin' in locals() and anio_fin:
                             # Si es el mismo año: "marzo a agosto del 2025"
