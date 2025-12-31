@@ -706,85 +706,86 @@ elif tipo_carta == "error_lectura_nolu":
                 st.caption(f"💰 Formateado: {monto_factura_nolu}")
 
 elif tipo_carta == "atencion_emergencia_halu":
-    with st.expander("📊 DATOS ESPECÍFICOS - ATENCIÓN EMERGENCIAS", expanded=True):
-        st.markdown("#### 📅 Fechas de atención")
+    with st.expander("📊 DATOS ESPECÍFICOS - ATENCIÓN EMERGENCIAS FORMULARIO 21", expanded=True):
+        st.markdown("#### 📋 Datos de Formulario 21")
+        st.markdown("##### 👤 Persona que solicitó atención emergencias")
         
         col_a, col_b = st.columns(2)
         
         with col_a:
-            fecha_solicitud_emerg_raw = st.text_input(
-                "Fecha solicitud:",
-                placeholder="03102025 o 03/10/2025",
-                key=f"fecha_solicitud_emerg_{st.session_state.count_reset}",
-                help="Fecha de la solicitud de emergencia"
+            # ⭐ Selector de Señor/Señora para quien solicitó
+            tratamiento_solicitante = st.selectbox(
+                "Formalidad (Señor o Señora):",
+                ["", "Señor", "Señora"],
+                key=f"tratamiento_solicitante_{st.session_state.count_reset}",
+                help="Tratamiento de quien solicitó la emergencia (puede ser distinto a quien va dirigida la carta)"
             )
-            fecha_solicitud_emerg = formatear_fecha(fecha_solicitud_emerg_raw)
-            if fecha_solicitud_emerg_raw and fecha_solicitud_emerg != fecha_solicitud_emerg_raw:
-                st.caption(f"📅 Formateado: {fecha_solicitud_emerg}")
+            
+            nombre_solicitante_raw = st.text_input(
+                "Nombre completo:",
+                placeholder="Mariana Lidia Espinoza Osorio",
+                key=f"nombre_solicitante_{st.session_state.count_reset}",
+                help="Nombre completo de quien solicitó la atención"
+            )
+            nombre_solicitante = capitalizar_texto(nombre_solicitante_raw)
         
         with col_b:
-            fecha_atencion_emerg_raw = st.text_input(
-                "Fecha atención:",
-                placeholder="15102025 o 15/10/2025",
-                key=f"fecha_atencion_emerg_{st.session_state.count_reset}",
-                help="Fecha en que se atendió la emergencia"
+            fecha_solicitud_formulario_raw = st.text_input(
+                "Fecha de solicitud en formulario:",
+                placeholder="03102025 o 03/10/2025",
+                key=f"fecha_solicitud_formulario_{st.session_state.count_reset}",
+                help="Fecha en que se solicitó la atención en el formulario 21"
             )
-            fecha_atencion_emerg = formatear_fecha(fecha_atencion_emerg_raw)
-            if fecha_atencion_emerg_raw and fecha_atencion_emerg != fecha_atencion_emerg_raw:
-                st.caption(f"📅 Formateado: {fecha_atencion_emerg}")
+            fecha_solicitud_formulario = formatear_fecha(fecha_solicitud_formulario_raw)
+            if fecha_solicitud_formulario_raw and fecha_solicitud_formulario != fecha_solicitud_formulario_raw:
+                st.caption(f"📅 Formateado: {fecha_solicitud_formulario}")
         
         st.markdown("---")
-        st.markdown("#### 👤 Persona que solicitó atención emergencias")
-        
-        # ⭐ NUEVO: Selector de Señor/Señora para quien solicitó
-        tratamiento_solicitante = st.selectbox(
-            "Formalidad (Señor o Señora):",
-            ["", "Señor", "Señora"],
-            key=f"tratamiento_solicitante_{st.session_state.count_reset}",
-            help="Tratamiento de quien solicitó la emergencia (puede ser distinto a quien va dirigida la carta)"
-        )
-        
-        nombre_solicitante_raw = st.text_input(
-            "Nombre completo:",
-            placeholder="Mariana Lidia Espinoza Osorio",
-            key=f"nombre_solicitante_{st.session_state.count_reset}",
-            help="Nombre completo de quien solicitó la atención"
-        )
-        nombre_solicitante = capitalizar_texto(nombre_solicitante_raw)
-        
-        st.markdown("---")
-        st.markdown("#### 📋 Orden de trabajo y nota de crédito")
+        st.markdown("#### 💰 Monto de Atención de Emergencias")
         
         col_c, col_d = st.columns(2)
         
         with col_c:
-            orden_trabajo = st.text_input(
-                "N° Orden de trabajo:",
-                placeholder="460506214",
-                key=f"orden_trabajo_{st.session_state.count_reset}",
-                help="Número de la orden de trabajo"
+            monto_emerg_input = st.text_input(
+                "Monto:",
+                placeholder="24903",
+                key=f"monto_emerg_{st.session_state.count_reset}",
+                help="Monto de la atención de emergencia"
             )
+            monto_emerg = formatear_monto(monto_emerg_input) if monto_emerg_input else ""
+            if monto_emerg:
+                st.caption(f"💰 Formateado: {monto_emerg}")
         
         with col_d:
-            nota_credito = st.text_input(
-                "N° Nota de crédito:",
-                placeholder="6669093",
-                key=f"nota_credito_{st.session_state.count_reset}",
-                help="Número de la nota de crédito"
+            fecha_emision_boleta_raw = st.text_input(
+                "Fecha de emisión boleta:",
+                placeholder="15102025 o 15/10/2025",
+                key=f"fecha_emision_boleta_{st.session_state.count_reset}",
+                help="Fecha de emisión de la boleta"
             )
+            fecha_emision_boleta = formatear_fecha(fecha_emision_boleta_raw)
+            if fecha_emision_boleta_raw and fecha_emision_boleta != fecha_emision_boleta_raw:
+                st.caption(f"📅 Formateado: {fecha_emision_boleta}")
         
         st.markdown("---")
-        st.markdown("#### 💰 Monto")
+        st.markdown("#### 📄 N° Boleta donde se facturó monto de atención de emergencias")
         
-        monto_emerg_input = st.text_input(
-            "Monto:",
-            placeholder="24903",
-            key=f"monto_emerg_{st.session_state.count_reset}",
-            help="Monto de la atención de emergencia"
+        numero_boleta_emerg = st.text_input(
+            "N° Boleta:",
+            placeholder="460506214",
+            key=f"numero_boleta_emerg_{st.session_state.count_reset}",
+            help="Número de la boleta donde se facturó la emergencia"
         )
-        monto_emerg = formatear_monto(monto_emerg_input) if monto_emerg_input else ""
-        if monto_emerg:
-            st.caption(f"💰 Formateado: {monto_emerg}")
+        
+        st.markdown("---")
+        st.markdown("#### 📋 Numero de Nota de crédito")
+        
+        nota_credito = st.text_input(
+            "N° Nota de crédito:",
+            placeholder="6669093",
+            key=f"nota_credito_{st.session_state.count_reset}",
+            help="Número de la nota de crédito"
+        )
 
 elif tipo_carta == "carta_falta_info":
     with st.expander("📊 DATOS ESPECÍFICOS - CARTA FALTA INFO", expanded=True):
@@ -1047,16 +1048,13 @@ if generar:
                                 reemplazos["[36.745]"] = lectura_formateada
                     
                     elif tipo_carta == "atencion_emergencia_halu":
-                        # Fechas
-                        if 'fecha_solicitud_emerg' in locals() and fecha_solicitud_emerg:
-                            reemplazos["[03/10/2025]"] = fecha_solicitud_emerg
-                        
-                        if 'fecha_atencion_emerg' in locals() and fecha_atencion_emerg:
-                            reemplazos["[15/10/2025]"] = fecha_atencion_emerg
+                        # Fecha de solicitud en formulario
+                        if 'fecha_solicitud_formulario' in locals() and fecha_solicitud_formulario:
+                            reemplazos["[03/10/2025]"] = fecha_solicitud_formulario
                         
                         # Persona solicitante con "el Sr." o "la Sra."
                         if 'nombre_solicitante' in locals() and nombre_solicitante and 'tratamiento_solicitante' in locals() and tratamiento_solicitante:
-                            # Determinar artículo según tratamiento DEL SOLICITANTE (no del destinatario)
+                            # Determinar artículo según tratamiento DEL SOLICITANTE
                             if tratamiento_solicitante == "Señor":
                                 texto_solicitante = f"el Sr. {nombre_solicitante}"
                             else:  # Señora
@@ -1065,17 +1063,21 @@ if generar:
                             reemplazos["[Mariana Lidia Espinoza Osorio]"] = nombre_solicitante
                             reemplazos["[el(a) Sr(a). XXXXXX XXXXXX]"] = texto_solicitante
                         
-                        # Nota de crédito
-                        if 'nota_credito' in locals() and nota_credito:
-                            reemplazos["[6669093]"] = nota_credito
-                        
-                        # Orden de trabajo
-                        if 'orden_trabajo' in locals() and orden_trabajo:
-                            reemplazos["[460506214]"] = orden_trabajo
-                        
                         # Monto
                         if 'monto_emerg' in locals() and monto_emerg:
                             reemplazos["[$24.903]"] = monto_emerg
+                        
+                        # Número de boleta
+                        if 'numero_boleta_emerg' in locals() and numero_boleta_emerg:
+                            reemplazos["[460506214]"] = numero_boleta_emerg
+                        
+                        # Fecha de emisión boleta
+                        if 'fecha_emision_boleta' in locals() and fecha_emision_boleta:
+                            reemplazos["[15/10/2025]"] = fecha_emision_boleta
+                        
+                        # Nota de crédito
+                        if 'nota_credito' in locals() and nota_credito:
+                            reemplazos["[6669093]"] = nota_credito
                     
                     elif tipo_carta == "carta_falta_info":
                         # N° de reclamo ingresado (igual que GR)
@@ -1098,7 +1100,7 @@ if generar:
                             run.font.name = 'Arial'
                             run.font.size = Pt(10)
                             
-                            # SOLO estas palabras van en negrita (SIN fecha, SIN DGR)
+                            # SOLO estas palabras van en negrita (SIN fecha, SIN DGR, SIN cuerpo de carta)
                             palabras_con_negrita = [
                                 tratamiento, 
                                 nombre_cliente, 
@@ -1113,7 +1115,10 @@ if generar:
                             es_fecha = (f"{comuna}," in texto_nuevo and "de" in texto_nuevo and str(hoy.year) in texto_nuevo)
                             es_dgr = ("DGR N°" in texto_nuevo and str(hoy.year) in texto_nuevo)
                             
-                            if any(x in texto_nuevo for x in palabras_con_negrita) and not es_fecha and not es_dgr:
+                            # NO aplicar negrita si el texto es muy largo (más de 100 caracteres = cuerpo de carta)
+                            es_cuerpo_carta = len(texto_nuevo) > 100
+                            
+                            if any(x in texto_nuevo for x in palabras_con_negrita) and not es_fecha and not es_dgr and not es_cuerpo_carta:
                                 run.font.bold = True
                             else:
                                 run.font.bold = False
